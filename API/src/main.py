@@ -1,5 +1,9 @@
+import asyncio
+import traceback
+from fastapi import Request
+import json
 import mysql.connector
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
 
 app = FastAPI()
 
@@ -8,7 +12,6 @@ db = mysql.connector.connect(
     user="root",
     password="foobar123",
     database="TorCord")
-
 
 @app.get("/")
 def read_root():
@@ -26,7 +29,7 @@ def read_item(id: int):
 
 
 @app.get("/msg")
-def read_items():
+async def read_items():
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM messages")
     result = cursor.fetchall()
@@ -34,16 +37,52 @@ def read_items():
 
 
 @app.post("/msg")
-def create_item(userID: str, content: str):
+async def create_item(request: Request):
+    try:
+        data = await request.json()
+        userID = data['userID']
+        content = data['content']
+    except Exception as e:
+        print(f"An error occurred while parsing the request data: {e}")
+        print(f"Received data: {await request.body()}")
+        raise HTTPException(status_code=400, detail="Invalid request data")
+
     cursor = db.cursor(dictionary=True)
     cursor.execute("INSERT INTO messages (userID, content) VALUES (%s, %s)", (userID, content))
     db.commit()
+    cursor.execute("SELECT LAST_INSERT_ID()")
+    result = cursor.fetchone()
     return {"userID": userID, "content": content}
 
 
 @app.post("/msg/{id}")
-def edit_item(id: int, userID: str, content: str):
+async def edit_item(id: int, userID: str, content: str):
     cursor = db.cursor(dictionary=True)
     cursor.execute("UPDATE messages SET userID = %s, content = %s WHERE msgID = %s", (userID, content, id))
     db.commit()
     return {"msgID": id, "userID": userID, "content": content}
+
+
+@app.websocket("/msgStream")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    sent_message_ids = set()  # Initialize sent_message_ids as an empty set
+    try:
+        while True:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM messages")
+            result = cursor.fetchall()
+            for row in result:
+                if row['msgID'] in sent_message_ids:
+                    continue  # Skip this message if it has been sent before
+                # Convert datetime to string
+                row['datetime'] = row['datetime'].isoformat()
+                await websocket.send_json(row)
+                sent_message_ids.add(row['msgID'])  # Add the ID of the sent message to sent_message_ids
+            await asyncio.sleep(1)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        traceback.print_exc()
+
+
+
