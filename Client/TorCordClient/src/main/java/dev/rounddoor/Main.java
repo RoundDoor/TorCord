@@ -32,9 +32,11 @@ public class Main {
     public static void main(String[] args) throws SocketException {
 
         generateUserID();
+        // Generate the text area for the GUI so that the websocket can update it while the rest of the GUI is being built
         textArea = new JTextArea(20, 40);
-        textArea.setEditable(false);
+        // Start the WebSocket connection
         startWebSocket();
+        // Start the GUI
         guiStart();
 
 
@@ -53,6 +55,7 @@ public class Main {
         JPanel panel = new JPanel();
         frame.add(panel);
 
+        textArea.setEditable(false);
         panel.add(textArea);
 
         JScrollPane scrollPane = new JScrollPane(textArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
