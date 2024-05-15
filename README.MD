@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="TorCord.png" width="500" height="500">
+</p>
+
 # TorCord
 
 This is a multi-language project that utilizes Python, and Java. The project is built with Maven.
