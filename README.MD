@@ -9,7 +9,7 @@ This is a multi-language project that utilizes Python, and Java. The project is 
 ## About
 This is a school project and was originally going to use spring boot for the API but decided to use FastAPI instead. Even though this was suppoed to be a Java project FastAPI is something that I have been wanting to learn and I think has more application to my future projects. The project is a chat application that is similar to Discord.
 
-## Challeneges 
+## Challenges 
 The hardest part of the project was to get the server to talk to the client. I ended up using a websocket to keep a constant connection going and only sending messages to the client when a new msg is sent to the server. The way that it was done, it had to call the whole database every instance. It would be more efficient to use a redis server to keep track of new messages.
 
 ## Getting Started
