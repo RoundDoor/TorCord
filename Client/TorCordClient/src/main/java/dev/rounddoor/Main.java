@@ -35,8 +35,10 @@ public class Main {
         // Generate the text area for the GUI so that the websocket can update it while the rest of the GUI is being built
         textArea = new JTextArea(20, 40);
         // Start the WebSocket connection
+        System.out.println(System.nanoTime()/1000000);
         startWebSocket();
         // Start the GUI
+        System.out.println(System.nanoTime()/1000000);
         guiStart();
 
 
@@ -116,7 +118,8 @@ public class Main {
                 public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
                     System.out.println("Received: " + text);
                     JSONObject msg = new JSONObject(text);
-                    textArea.append(msg.get("userID").toString() + ":  " + msg.get("content") + "\n");
+                    textArea.append(formatMessage(msg));
+                    textArea.setCaretPosition(textArea.getDocument().getLength());
                     // Here you can update your GUI to display the new message
                 }
 
@@ -129,6 +132,46 @@ public class Main {
 
             client.dispatcher().executorService().shutdown();
         }).start();
+    }
+
+    /**
+     * This method is used to format the message received from the server.
+     *
+     * @param msg The message received from the server.
+     * @return The formatted message.
+     */
+    public static String formatMessage(JSONObject msg) {
+        String userID = msg.get("userID").toString();
+        String content = msg.get("content").toString();
+        String msgString = userID + ": " + content + "\n";
+        int userIDLength = userID.length();
+        int contentLength = content.length();
+        // Break up msg into lines of 70
+        // If the message is less than 70 characters
+        if (msgString.length() <= 70) {
+            return msgString;
+        }
+        // If the message is greater than 70 characters
+        else {
+            for (int i = 0; i < msgString.length(); i += 70) {
+                if (i + 70 < msgString.length()) {
+                    String line = msgString.substring(i, i + 70);
+                    String leftover = "";
+                    // If the line ends in the middle of a word
+                    if (line.charAt(69) != ' ') {
+                        int j = 69;
+                        while (line.charAt(j) != ' ') {
+                            j--;
+                        }
+                        line = line.substring(0, j);  // get the line up to the last word
+                        leftover = msgString.substring(i + j, i + 70); // get the leftover characters
+                        leftover = leftover.replace(" ", ""); // remove white space
+                    }
+                    msgString = msgString.substring(0, i) + line + "\n" + leftover + msgString.substring(i + 70);
+                }
+            }
+        }
+        return msgString;
     }
 
 
@@ -193,6 +236,3 @@ public class Main {
     }
 
 }
-
-
-
