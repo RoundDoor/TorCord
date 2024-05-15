@@ -66,6 +66,7 @@ async def edit_item(id: int, userID: str, content: str):
 @app.websocket("/msgStream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    # await asyncio.sleep(5) # Uncomment this line to test client thread load handling
     sent_message_ids = set()  # Initialize sent_message_ids as an empty set
     try:
         while True:
